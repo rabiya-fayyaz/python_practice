@@ -36,4 +36,4 @@ I plan to improve reliability and testing, learn HTML, CSS, and JavaScript, and 
 
 ## Getting Started
 
-The current version is a command-line application written in Python. Setup instructions and dependencies will be documented as the project is prepared for use on other computers.
+The current version is a command-line application written in Python. Setup instructions and dependencies will be documented as the project is prepared for use on other computers.Testing GitHub update
