@@ -1,0 +1,310 @@
+# 10)Create a StudySession class
+# class StudySession:
+#     start_time
+#     end_time
+#     duration
+
+# Concepts:
+
+# OOP
+# Date and time handling
+
+# 11)Create a User class
+# class User:
+#     name
+#     tasks
+#     study_hours
+#     streak
+
+
+import datetime
+import time 
+import json
+class User:
+    def __init__(self, name):
+        self.name = name
+        self.tasks = []
+        self.study_hours = 0
+        self.streak = 0
+        self.sessions = []
+
+def load_tasks():
+ try:
+  with open("tasks.json","r")as f :
+   data = json.load(f)
+   tasks = []
+   for item in data:
+    task = Task(item["title"], item["subject"],item["deadline"],item["completed"],item["minutes_studied"])
+    tasks.append(task)
+  return tasks
+   
+ except FileNotFoundError:
+    return []
+   
+class Task:
+    
+    def __init__(self, title, subject,deadline , completed=False, minutes_studied=0):
+        self.title = title
+        self.subject = subject
+        self.completed = completed
+        self.deadline = deadline
+        self.minutes_studied = minutes_studied
+
+def add_tasks(user):
+
+    while True:
+        title = input("Enter task: ")
+        subject = input("Enter subject: ")
+        deadline = input("Enter deadline of the task:")
+        new_task = Task(title, subject,deadline)
+
+        user.tasks.append(new_task)
+
+        choice = input("Add another?yes/no: ").lower()
+
+        if choice == "no":
+            break
+
+class StudySession:
+ def __init__(self, start_time, end_time):
+        self.start_time = start_time
+        self.end_time = end_time
+        self.duration = self.calculate_duration()
+ def calculate_duration(self):
+        duration = self.end_time - self.start_time
+        duration = duration.total_seconds() / 60  # Convert to minutes
+        return duration
+ 
+def countdown(user):
+    """Starts a study session for a selected task."""
+
+    today = None
+
+    while True:
+        task_no = input("Which task do you want to do? ")
+
+        # User pressed Enter without choosing a task
+        if task_no == "":
+            print("No task completed.")
+            break
+
+        # Check that the task number is valid
+        try:
+            task_no = int(task_no)
+        except ValueError:
+            print("Invalid task number.")
+            continue
+
+        if task_no < 1 or task_no > len(user.tasks):
+            print("Task number does not exist.")
+            continue
+
+        # Get study duration
+        study_time = int(input("Enter study time (minutes): "))
+        remaining_seconds = study_time * 60
+
+        # Record the start time
+        start_time = datetime.datetime.now()
+
+        # Countdown timer
+        while remaining_seconds > 0:
+            time.sleep(1)
+            remaining_seconds -= 1
+
+            minutes = remaining_seconds // 60
+            seconds = remaining_seconds % 60
+
+            print(f"{minutes:02}:{seconds:02}")
+
+        print("Study session finished!")
+
+        ask = input("Have you completed your task? (yes/no): ").lower()
+
+        if ask == "yes":
+            end_time = datetime.datetime.now()
+            today = datetime.date.today()
+
+            # Create a study session object
+            session = StudySession(start_time, end_time)
+
+            print("\nStudy Session")
+            print("=" * 20)
+            print("Start:", session.start_time.strftime("%Y-%m-%d %H:%M:%S"))
+            print("End:", session.end_time.strftime("%Y-%m-%d %H:%M:%S"))
+            print(f"Duration: {session.duration:.2f} minutes")
+            print("=" * 20)
+
+            # Update user information
+            user.sessions.append(session)
+
+            task = user.tasks[task_no - 1]
+            task.completed = True
+            task.minutes_studied += session.duration
+
+            user.study_hours += session.duration
+
+            print(f"Task {task_no} completed.")
+
+        elif ask == "no":
+            break
+
+    return today
+  
+def save_study_date(today):
+   today =str(today)
+   try:
+    with open("streak.json","r")as f:
+      dates = json.load(f)
+   except FileNotFoundError:
+      dates = []
+   if today not in dates:
+         dates.append(today)
+   with open("streak.json","w")as f:
+      json.dump(dates,f)
+
+def display_streak(today):
+ count = 0
+ with open("streak.json","r")as f:
+      dates = json.load(f)
+      while True:
+       if str(today) not in dates:
+          break
+       else: 
+        count += 1
+        today = today - datetime.timedelta(days=1)
+ return count
+       
+def total_study_time(user):
+   total = 0
+   for task in user.tasks:
+      total += task.minutes_studied
+   return total
+         
+def display_tasks(user):     
+    print("\nYour Tasks\n")
+    for i, task in enumerate(user.tasks, start=1):
+            print(f"Task {i}")
+            print(f"Task Name : {task.title}")
+            print(f"Subject   : {task.subject}")
+            print(f"Deadline :{task.deadline}")
+            status = "Completed" if task.completed  else "Pending"
+            print(f"Status     : {status}")
+            print(f"Minutes_Studied : {task.minutes_studied:.2f}")
+            print("-" * 25)
+
+def save_tasks(user):
+ data = []
+
+ for task in user.tasks:
+    dictionary = {
+        "title": task.title,
+        "subject": task.subject,
+        "deadline":task.deadline,
+        "completed": task.completed,
+        "minutes_studied": task.minutes_studied
+    }
+
+    data.append(dictionary)
+ with open("tasks.json", "w") as f:
+        json.dump(data,f)
+
+def count_completed(user):    
+ count = 0       
+ for task in user.tasks:  
+     if task.completed :  
+      count += 1
+ return count
+
+def calculate_percentage(completed_tasks,total_tasks):
+  percentage =(completed_tasks/total_tasks)*100
+  return percentage
+
+def study_statistics(user):
+ study_stats={}
+ for task in user.tasks:
+    if task.subject in study_stats:
+       study_stats[task.subject]+= task.minutes_studied
+    else:
+        study_stats[task.subject] = task.minutes_studied
+ return study_stats
+
+def most_studied_subject(study_stats):
+  highest_minutes = 0
+  best_subject= ""
+  for subject in study_stats:
+    if highest_minutes < study_stats[subject]:
+        highest_minutes =  study_stats[subject]
+        best_subject = subject
+  return highest_minutes,best_subject
+
+def main():
+    # Create the current user
+    name = input("Enter your name: ")
+    user = User(name)
+
+    # Load previously saved tasks
+    user.tasks = load_tasks()
+
+    # Add new tasks
+    add_tasks(user)
+
+    # Start a study session
+    today = countdown(user)
+
+    # Update streak if the user studied today
+    if today is not None:
+        save_study_date(today)
+
+        user.streak = display_streak(today)
+
+        if user.streak == 1:
+            print(f"Current streak: {user.streak} day")
+        else:
+            print(f"Current streak: {user.streak} days")
+
+    # Calculate total study time
+    user.study_hours = total_study_time(user)
+
+    hours = user.study_hours // 60
+    minutes = user.study_hours % 60
+
+    hour_word = "hour" if hours == 1 else "hours"
+    minute_word = "minute" if minutes == 1 else "minutes"
+
+    print(f"You studied for {hours:.0f} {hour_word} {minutes:.2f} {minute_word}")
+
+    # Display and save tasks
+    display_tasks(user)
+    save_tasks(user)
+
+    # Progress statistics
+    completed_tasks = count_completed(user)
+
+    try:
+        percentage = calculate_percentage(completed_tasks, len(user.tasks))
+    except ZeroDivisionError:
+        percentage = 0.0
+
+    print(f"{percentage:.2f}% completed")
+    print(f"{completed_tasks} out of {len(user.tasks)} tasks completed")
+
+    # Subject statistics
+    study_stats = study_statistics(user)
+
+    for subject in study_stats:
+        total_minutes = study_stats[subject]
+        hours = total_minutes // 60
+        minutes = total_minutes % 60
+
+        print(f"{subject}: {hours:.0f} hours {minutes:.0f} minutes")
+
+    highest_minutes, best_subject = most_studied_subject(study_stats)
+
+    best_hours = highest_minutes // 60
+    best_minutes = highest_minutes % 60
+
+    print(
+        f"Most studied subject: "
+        f"{best_subject} ({best_hours:.0f} hours {best_minutes:.0f} minutes)"
+    )
+main()

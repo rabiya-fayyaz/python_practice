@@ -1,0 +1,4 @@
+Food 500
+Transport 200
+Books 1000
+Internet 300
